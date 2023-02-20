@@ -1,3 +1,5 @@
+data/model_spec/*
+
 .DS_Store
 
 # Byte-compiled / optimized / DLL files
