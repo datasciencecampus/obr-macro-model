@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "obr-macro-model"
 version = "0.1.0"
-description = "A python translation of the Office for Budget Responsiblity's (OBR's) UK macroeconomic model"
+description = "A Python translation of the Office for Budget Responsiblity's (OBR's) UK macroeconomic model"
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 
