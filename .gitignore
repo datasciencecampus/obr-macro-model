@@ -1,4 +1,8 @@
 data/model_spec/*
+data/model_series/*
+!data/model_spec/.gitkeep
+!data/model_series/.gitkeep
+
 
 .DS_Store
 

@@ -1,6 +1,7 @@
-import pandas as pd
-from pathlib import Path
 import re
+from pathlib import Path
+
+import pandas as pd
 from skimpy import clean_columns
 
 df = pd.read_excel(Path("data/obr/List-of-model-variables_May-2021.xlsx"))
