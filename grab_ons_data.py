@@ -1,3 +1,4 @@
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -37,6 +38,7 @@ def get_series_ids_and_datasets(series_identifiers: list) -> pd.DataFrame:
     for series_id in series_identifiers:
         try:
             data = requests.get(ROOT_URL + f"timeseries/{series_id}").json()
+            time.sleep(0.35)
             dataset_id = data["items"][0]["description"]["datasetId"]
             temp_df = pd.DataFrame.from_dict(
                 {"series_id": series_id, "dataset_id": dataset_id}, orient="index"
@@ -76,15 +78,17 @@ def get_an_ONS_time_series(dataset_id: str, timeseries_id: str) -> pd.DataFrame:
         + "/data"
     )
     data = requests.get(url).json()
+    time.sleep(0.35)
     title = data["description"]["title"]
     # check if monthly or quarterly from whichever list not empty
-    if data["months"] != []:
-        time_series_data = data["months"]
-    else:
+    if data["quarters"] != []:
         time_series_data = data["quarters"]
+
+    else:
+        time_series_data = data["months"]
     data_df = pd.DataFrame(pd.json_normalize(time_series_data))
     data_df["title"] = title
-    logger.debug("Quarter-only hard-coded here")
+    # logger.debug("Quarter-only hard-coded here")
     data_df["date_string"] = data_df["year"] + "-" + data_df["quarter"]
     data_df["datetime"] = pd.to_datetime(data_df["date_string"])
     data_df = clean_columns(data_df)
@@ -105,6 +109,7 @@ for row_num, row in datasets_df.iterrows():
     try:
         this_data_frame = get_an_ONS_time_series(row["dataset_id"], row["series_id"])
         df = pd.concat([df, this_data_frame])
+        logger.debug(f"Retrieved {row['series_id']} from dataset {row['dataset_id']}.")
     except:
         logger.debug(
             f"Was not able to retrieve series {row['series_id']} from dataset {row['dataset_id']}."

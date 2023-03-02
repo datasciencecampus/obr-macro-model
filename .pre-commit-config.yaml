@@ -60,3 +60,25 @@ repos:
         entry: nbstripout
         language: python
         types: [jupyter]
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.0.3
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets - Detect secrets in staged code
+        args:
+          [
+            "--baseline",
+            ".secrets.baseline",
+            "--exclude-files",
+            '.*\.ipynb$|poetry.lock',
+          ]
+        exclude: .*/tests/.*|^\.cruft\.json$
+      - id: detect-secrets
+        name: "detect-secrets-jupyter"
+        args:
+          [
+            "--exclude-files",
+            ".*[^i][^p][^y][^n][^b]$",
+            "--exclude-lines",
+            '"(hash|id|image/\w+)":.*',
+          ]
