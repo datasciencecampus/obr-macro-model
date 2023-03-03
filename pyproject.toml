@@ -16,6 +16,8 @@ loguru = "^0.6.0"
 pyarrow = "^11.0.0"
 requests = "^2.28.2"
 reorder-python-imports = "^3.9.0"
+regex = "^2022.10.31"
+plusminus = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit-hooks = "^4.4.0"
