@@ -17,36 +17,46 @@ class EviewsParser(ArithmeticParser):
             else:
                 return false_result
 
-        def d_function(variable_name: str):
-            match = re.search("\d+", variable_name)
-            if match:
-                number = str(int(match[0]) + 1)
-                previous_period = re.sub(match[0], number, variable_name)
-            else:
-                previous_period = "{}_minus1".format(variable_name)
-            return self.evaluate(variable_name) - self.evaluate(previous_period)
+        def create_previous_period_string(input_string: str):
 
-        def dlog_function(variable_name: str):
-            match = re.search("\d+", variable_name)
-            if match:
-                number = str(int(match[0]) + 1)
-                previous_period = "log({})".format(
-                    re.sub(match[0], number, variable_name)
-                )
-            else:
-                previous_period = "log({}_minus1)".format(variable_name)
-            return self.evaluate("log({})".format(variable_name)) - self.evaluate(
-                previous_period
+            # defines the operators that may be present in d/dlog
+            operators = ["*", "/"]
+
+            input_tokens = input_string.split()
+            input_token_previous_period = []
+
+            # iterates though the tokens and changes to previous period
+            for token in input_tokens:
+                # searches for match in token of form minus#
+                match = re.search("(?<=minus)(\d+)", token)
+                if match:
+                    number = str(int(match[0]) + 1)
+                    previous_period = re.sub(match[0], number, token)
+                elif token not in operators:
+                    previous_period = "{}_minus1".format(token)
+                else:
+                    previous_period = token
+                input_token_previous_period.append(previous_period)
+            return " ".join(input_token_previous_period)
+
+        def d_function(input_string: str):
+
+            previous_period_string = create_previous_period_string(input_string)
+            return self.evaluate(input_string) - self.evaluate(previous_period_string)
+
+        def dlog_function(input_string: str):
+
+            previous_period_string = create_previous_period_string(input_string)
+
+            return self.evaluate("log({})".format(input_string)) - self.evaluate(
+                "log({})".format(previous_period_string)
             )
 
+        def eval_function(variable, date):
+
+            return self.evaluate(variable + "_" + date)
+
         super().customize()
-        """
-        self.add_operator("of", 2, ArithmeticParser.LEFT, lambda a, b: a * b)
-        self.add_operator('%', 1, ArithmeticParser.LEFT, lambda a: a / 100)
-        self.add_function('PV', 3, pv)
-        self.add_function('FV', 3, fv)
-        self.add_function('PP', 3, pp)
-        """
 
         # gets current year and month
         self.initialize_variable(
@@ -57,12 +67,15 @@ class EviewsParser(ArithmeticParser):
         self.add_function("recode", 3, recode_func)
         self.add_function("d", 1, d_function)
         self.add_function("dlog", 1, dlog_function)
+        self.add_function("elem", 2, eval_function)
 
 
 parser = EviewsParser()
 parser["income_minus2"] = 9
 parser["income_minus1"] = 10
 parser["income"] = 6
+parser["PBRENT_2009Q3"] = 12
+
 parser.runTests(
     """\
     date
@@ -76,12 +89,16 @@ parser.runTests(
     dlog('income')
     d('income_minus1')
     dlog('income_minus1')
+    d('income / income_minus1')
+    dlog('income / income_minus1')
+    elem("PBRENT" , "2009Q3")
     """,
     postParse=lambda _, result: result[0].evaluate(),
 )
 
 #%% cleaning prior to
 import regex as re
+from nltk.tokenize import word_tokenize
 
 
 def clean_equation(equation):
@@ -101,10 +118,13 @@ def clean_equation(equation):
     equation = re.sub(r"(?<!\^)\(-(\d+)\)", r"_minus\1", equation)
 
     # put variable in d function in quotations
-    equation = re.sub(r"d\((\w+)\)", r'd("\1")', equation)
+    equation = re.sub(r"d\((.+)\)", r'd("\1")', equation)
 
     # put variable in dlog function in quotations
-    equation = re.sub(r"dlog\((\w+)\)", r'dlog("\1")', equation)
+    equation = re.sub(r"dlog\((.+)\)", r'dlog("\1")', equation)
+
+    # put variable in elem function in quotations
+    equation = re.sub(r"elem\((\w+)", r'elem("\1"', equation)
 
     return equation
 
@@ -114,4 +134,5 @@ print(clean_equation("@dlog(income(-1))"))
 print(clean_equation("8^(-1)"))
 print(clean_equation("9(-12)"))
 print(clean_equation("dlog(GPW  / APH)"))
+print(clean_equation("@elem(dave, 'Q1_1970')"))
 # %%
